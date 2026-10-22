@@ -222,4 +222,7 @@ __marimo__/
 # Raw data is downloaded with src/download_data.py
 data/raw/*
 !data/raw/.gitkeep
+
+# Processed data is built with src/make_dataset.py
+data/processed/*
 .DS_Store
