@@ -10,6 +10,7 @@ PL_ID = "GB1"
 LAST_SEASON = 2025
 SEASON_START = "2025-07-01"
 SEASON_END = "2026-07-01"
+SUMMER_WINDOW_END = "2025-09-01"
 
 # The two dates used to compare the market values (see the data audit notebook).
 DATE_1 = "2025-08-15"
@@ -35,14 +36,26 @@ def make_dataset() -> pd.DataFrame :
         & (clubs["last_season"] == LAST_SEASON)
     ]
 
-    pl_players = players[
-        players["current_club_id"].isin(pl_clubs["club_id"])
-        & (players["last_season"] == LAST_SEASON)
-    ].merge(
-        pl_clubs[["club_id", "name"]].rename(columns={"name": "club"}),
-        left_on="current_club_id",
-        right_on="club_id",
-    )
+    season = appearances[
+        (appearances["competition_id"] == PL_ID)
+        & (appearances["date"] >= SEASON_START)
+        & (appearances["date"] < SEASON_END)
+    ]
+
+    # Club of the player during the 2025-26 season: the last Premier League club he played for,
+    # or, if he did not play, his Premier League club in the valuations of the season.
+    played_club = season.sort_values("date").groupby("player_id")["player_club_id"].last()
+    squad_valuations = valuations[
+        (valuations["date"] >= SUMMER_WINDOW_END)
+        & (valuations["date"] <= DATE_2)
+        & valuations["current_club_id"].isin(pl_clubs["club_id"])
+    ]
+    squad_club = squad_valuations.sort_values("date").groupby("player_id")["current_club_id"].last()
+    pl_club = played_club.combine_first(squad_club)
+
+    pl_players = players[players["player_id"].isin(pl_club.index)].copy()
+    pl_players["club_id"] = pl_players["player_id"].map(pl_club).astype(int)
+    pl_players = pl_players.merge(pl_clubs[["club_id", "name"]].rename(columns={"name": "club"}), on="club_id")
 
     dataset = pl_players[[
         "player_id", "name", "club_id", "club", "position", "sub_position", "foot", "height_in_cm",
@@ -55,11 +68,6 @@ def make_dataset() -> pd.DataFrame :
     dataset["contract_years_left"] = ((contract_expiration - pd.Timestamp(DATE_2)).dt.days / 365.25).round(1)
 
     # Premier League stats of the season. The red cards are missing for 2025-26, so they are not kept.
-    season = appearances[
-        (appearances["competition_id"] == PL_ID)
-        & (appearances["date"] >= SEASON_START)
-        & (appearances["date"] < SEASON_END)
-    ]
     stats = season.groupby("player_id").agg(
         appearances=("appearance_id", "count"),
         minutes_played=("minutes_played", "sum"),
