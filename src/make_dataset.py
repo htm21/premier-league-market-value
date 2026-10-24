@@ -10,11 +10,10 @@ PL_ID = "GB1"
 LAST_SEASON = 2025
 SEASON_START = "2025-07-01"
 SEASON_END = "2026-07-01"
-SUMMER_WINDOW_END = "2025-09-01"
 
 # The two dates used to compare the market values (see the data audit notebook).
 DATE_1 = "2025-08-15"
-DATE_2 = "2026-05-24"
+DATE_2 = "2026-06-03"
 
 def value_at(valuations, date) :
     """Last known market value of each player at the given date."""
@@ -23,7 +22,7 @@ def value_at(valuations, date) :
 
 def make_dataset() -> pd.DataFrame :
     """
-    Build one row per Premier League 2025-26 player with a market value at both dates,
+    Build one row per player who played in the Premier League in 2025-26 with a market value at both dates,
     with his profile, his Premier League stats of the season and his market value change.
     """
     clubs = pd.read_csv(RAW_DATA_DIR / "clubs.csv.gz")
@@ -42,16 +41,8 @@ def make_dataset() -> pd.DataFrame :
         & (appearances["date"] < SEASON_END)
     ]
 
-    # Club of the player during the 2025-26 season: the last Premier League club he played for,
-    # or, if he did not play, his Premier League club in the valuations of the season.
-    played_club = season.sort_values("date").groupby("player_id")["player_club_id"].last()
-    squad_valuations = valuations[
-        (valuations["date"] >= SUMMER_WINDOW_END)
-        & (valuations["date"] <= DATE_2)
-        & valuations["current_club_id"].isin(pl_clubs["club_id"])
-    ]
-    squad_club = squad_valuations.sort_values("date").groupby("player_id")["current_club_id"].last()
-    pl_club = played_club.combine_first(squad_club)
+    # Only the players who played in the Premier League in 2025-26, with the last Premier League club they played for.
+    pl_club = season.sort_values("date").groupby("player_id")["player_club_id"].last()
 
     pl_players = players[players["player_id"].isin(pl_club.index)].copy()
     pl_players["club_id"] = pl_players["player_id"].map(pl_club).astype(int)
