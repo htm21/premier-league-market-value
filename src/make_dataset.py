@@ -49,8 +49,7 @@ def make_dataset() -> pd.DataFrame :
     pl_players = pl_players.merge(pl_clubs[["club_id", "name"]].rename(columns={"name": "club"}), on="club_id")
 
     dataset = pl_players[[
-        "player_id", "name", "club_id", "club", "position", "sub_position", "foot", "height_in_cm",
-        "international_caps",
+        "player_id", "name", "club_id", "club", "position", "sub_position", "international_caps",
     ]].copy()
 
     date_of_birth = pd.to_datetime(pl_players["date_of_birth"])
@@ -58,13 +57,16 @@ def make_dataset() -> pd.DataFrame :
     dataset["age"] = ((pd.Timestamp(DATE_2) - date_of_birth).dt.days / 365.25).round(1)
     dataset["contract_years_left"] = ((contract_expiration - pd.Timestamp(DATE_2)).dt.days / 365.25).round(1)
 
-    # Premier League stats of the season. The red cards are missing for 2025-26, so they are not kept.
+    # Missing values (see the data dictionary): no contract end date means a contract over,
+    # and no caps means no game for the national team.
+    dataset["contract_years_left"] = dataset["contract_years_left"].fillna(0)
+    dataset["international_caps"] = dataset["international_caps"].fillna(0).astype(int)
+
     stats = season.groupby("player_id").agg(
         appearances=("appearance_id", "count"),
         minutes_played=("minutes_played", "sum"),
         goals=("goals", "sum"),
         assists=("assists", "sum"),
-        yellow_cards=("yellow_cards", "sum"),
     )
     dataset = dataset.merge(stats, left_on="player_id", right_index=True, how="left")
     dataset[stats.columns] = dataset[stats.columns].fillna(0).astype(int)
