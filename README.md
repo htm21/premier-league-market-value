@@ -36,7 +36,7 @@ The raw files are not stored in the repository, they are downloaded with a scrip
 - The random forest explains 75% of the differences in market value, with an average error of 8.7 M€ on the test set.
 - Age (41%) and minutes played (32%) drive most of the model, followed by the contract length, the international caps and the club.
 - The model is too low for the most expensive players: for the players worth 50 M€ or more, its estimate is on average 26 M€ below their real market value.
-- With an error of 7.8 M€ as threshold, 49 players with at least 900 minutes are undervalued and 85 overvalued. The undervalued ones are mostly regular starters of smaller clubs, around 25 years old.
+- To find the undervalued and overvalued players, each player is estimated by a model that never saw him (out-of-fold predictions, average error of 7.8 M€). With this error as threshold, 49 players with at least 900 minutes are undervalued and 85 overvalued. The undervalued ones are mostly regular starters of smaller clubs, around 25 years old.
 
 The model takes into account only one season and 516 players. Talent, reputation, and injuries are not included in the data. Therefore, a gap is an indication that must be checked, not proof.
 
