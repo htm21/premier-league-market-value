@@ -26,7 +26,7 @@ One row per player who played at least one Premier League game in 2025-26 and ha
 | `value_change_eur` | `value_end_eur` - `value_start_eur` | € | computed | not a feature (data leakage) |
 | `value_change_pct` | Value change in % of `value_start_eur` | % | computed | not a feature (data leakage) |
 
-The columns `market_value_in_eur` and `highest_market_value_in_eur` of the `players` table are not kept: they contain the answer, so they cannot be used to explain the market value.
+The columns `market_value_in_eur` and `highest_market_value_in_eur` of the `players` table are not kept : they contain the answer, so they cannot be used to explain the market value.
 
 ## Missing values
 
@@ -40,5 +40,4 @@ The missing values are replaced in `src/make_dataset.py`, so the final dataset h
 ## Columns not kept
 
 - The red cards: they are missing in the source for 2025-26 (see the data audit notebook).
-- The yellow cards: they mostly repeat the playing time and the position.
-- The preferred foot and the height: they are almost not linked to the market value, and the height mostly repeats the position.
+- The preferred foot, the height, the yellow cards: they are almost not linked to the market value.
